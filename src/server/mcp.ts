@@ -1,16 +1,11 @@
 import { Server, ServerOptions } from "./index.js";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import {
   z,
   ZodRawShape,
   ZodObject,
   ZodString,
-  AnyZodObject,
-  ZodTypeAny,
-  ZodType,
-  ZodTypeDef,
-  ZodOptional,
-} from "zod";
+  AnyZodObject, ZodType, ZodOptional
+} from "zod/v4";
 import {
   Implementation,
   Tool,
@@ -117,18 +112,13 @@ export class McpServer {
               title: tool.title,
               description: tool.description,
               inputSchema: tool.inputSchema
-                ? (zodToJsonSchema(tool.inputSchema, {
-                  strictUnions: true,
-                }) as Tool["inputSchema"])
+                ? (z.toJSONSchema(tool.inputSchema) as Tool["inputSchema"])
                 : EMPTY_OBJECT_JSON_SCHEMA,
               annotations: tool.annotations,
             };
 
             if (tool.outputSchema) {
-              toolDefinition.outputSchema = zodToJsonSchema(
-                tool.outputSchema,
-                { strictUnions: true }
-              ) as Tool["outputSchema"];
+              toolDefinition.outputSchema = z.toJSONSchema(tool.outputSchema) as Tool["outputSchema"];
             }
 
             return toolDefinition;
@@ -292,7 +282,7 @@ export class McpServer {
       return EMPTY_COMPLETION_RESULT;
     }
 
-    const def: CompletableDef<ZodString> = field._def;
+    const def: CompletableDef<ZodString> = (field as any)._def;
     const suggestions = await def.complete(request.params.argument.value, request.params.context);
     return createCompletionResult(suggestions);
   }
@@ -1151,7 +1141,7 @@ export class ResourceTemplate {
 export type ToolCallback<Args extends undefined | ZodRawShape = undefined> =
   Args extends ZodRawShape
   ? (
-    args: z.objectOutputType<Args, ZodTypeAny>,
+    args: z.output<ZodObject<Args>>,
     extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
   ) => CallToolResult | Promise<CallToolResult>
   : (extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => CallToolResult | Promise<CallToolResult>;
@@ -1258,15 +1248,15 @@ export type RegisteredResourceTemplate = {
 
 type PromptArgsRawShape = {
   [k: string]:
-  | ZodType<string, ZodTypeDef, string>
-  | ZodOptional<ZodType<string, ZodTypeDef, string>>;
+    | ZodType<string>
+    | ZodOptional<ZodType<string>>;
 };
 
 export type PromptCallback<
   Args extends undefined | PromptArgsRawShape = undefined,
 > = Args extends PromptArgsRawShape
   ? (
-    args: z.objectOutputType<Args, ZodTypeAny>,
+    args: z.output<ZodObject<Args>>,
     extra: RequestHandlerExtra<ServerRequest, ServerNotification>,
   ) => GetPromptResult | Promise<GetPromptResult>
   : (extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => GetPromptResult | Promise<GetPromptResult>;

@@ -1,4 +1,4 @@
-import { z, ZodTypeAny } from "zod";
+import { z, ZodTypeAny } from "zod/v4";
 import { AuthInfo } from "./server/auth/types.js";
 
 export const LATEST_PROTOCOL_VERSION = "2025-06-18";
@@ -686,7 +686,7 @@ export const GetPromptRequestSchema = RequestSchema.extend({
     /**
      * Arguments to use for templating the prompt.
      */
-    arguments: z.optional(z.record(z.string())),
+    arguments: z.optional(z.record(z.string(), z.string())),
   }),
 });
 
@@ -983,7 +983,7 @@ export const CallToolRequestSchema = RequestSchema.extend({
   method: z.literal("tools/call"),
   params: BaseRequestParamsSchema.extend({
     name: z.string(),
-    arguments: z.optional(z.record(z.unknown())),
+    arguments: z.optional(z.record(z.string(), z.unknown())),
   }),
 });
 
