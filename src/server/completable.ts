@@ -54,19 +54,16 @@ export function completable<T extends ZodType>(
   schema: T,
   complete: CompleteCallback<T>,
 ): T & { _def: T["_def"] & CompletableDef<T> } {
-  const def: any = (schema as unknown as { _def: Record<string, unknown>; def?: Record<string, unknown> })._def;
+  const def: any = (schema as any)._def;
 
-  // Preserve existing definition fields while injecting our own.
-  const newDef = {
-    ...def,
-    typeName: McpZodTypeKind.Completable,
-    complete,
-  } as T["_def"] & CompletableDef<T>;
+  // Inject our metadata directly onto the (mutable) definition object rather
+  // than attempting to re-assign the read-only `_def` property.
+  def.typeName = McpZodTypeKind.Completable;
+  def.complete = complete;
 
-  // Assign back to both `def` and the (deprecated) `_def` alias so that older
-  // code which still relies on `_def` continues to work.
-  (schema as any)._def = newDef;
-  (schema as any).def = newDef;
+  // Some utilities reference `def` instead of `_def`; ensure both point to the
+  // same object so the new properties are visible everywhere.
+  (schema as any).def = def;
 
   return schema as T & { _def: T["_def"] & CompletableDef<T> };
 }
