@@ -112,13 +112,13 @@ export class McpServer {
               title: tool.title,
               description: tool.description,
               inputSchema: tool.inputSchema
-                ? (z.toJSONSchema(tool.inputSchema) as Tool["inputSchema"])
+                ? (z.toJSONSchema(tool.inputSchema, { unrepresentable: "any"}) as Tool["inputSchema"])
                 : EMPTY_OBJECT_JSON_SCHEMA,
               annotations: tool.annotations,
             };
 
             if (tool.outputSchema) {
-              toolDefinition.outputSchema = z.toJSONSchema(tool.outputSchema) as Tool["outputSchema"];
+              toolDefinition.outputSchema = z.toJSONSchema(tool.outputSchema, { unrepresentable: "any" }) as Tool["outputSchema"];
             }
 
             return toolDefinition;
